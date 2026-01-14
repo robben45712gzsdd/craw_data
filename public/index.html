@@ -3,191 +3,711 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Web Crawler Tool - Công cụ Crawl Dữ liệu</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
+    <title>Crawler Doanh Nghiệp - Multi Site</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 900px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .radio-option input[type="radio"] {
+            width: auto;
+            cursor: pointer;
+        }
+
+        .radio-option label {
+            margin: 0;
+            cursor: pointer;
+            font-weight: 400;
+        }
+
+        .site-url {
+            font-size: 0.9em;
+            color: #888;
+            font-style: italic;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .status.show {
+            display: block;
+        }
+
+        .status h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .status-message {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results {
+            margin-top: 20px;
+        }
+
+        .company-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .company-card h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .company-card p {
+            margin: 5px 0;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .success {
+            color: #4caf50;
+            font-weight: 600;
+        }
+
+        .error {
+            color: #f44336;
+            font-weight: 600;
+        }
+
+        .download-btn {
+            background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+            margin-top: 20px;
+        }
+
+        .download-btn:hover {
+            box-shadow: 0 10px 20px rgba(76, 175, 80, 0.4);
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin-bottom: 25px;
+            border-radius: 4px;
+        }
+
+        .info-box p {
+            color: #1976d2;
+            line-height: 1.6;
+        }
+
+        .url-input-group {
+            display: flex;
+            gap: 10px;
+            align-items: end;
+        }
+
+        .url-input-group > div {
+            flex: 1;
+        }
+
+        .check-btn {
+            width: auto;
+            padding: 12px 30px;
+            margin-top: 0;
+            white-space: nowrap;
+            background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+        }
+
+        .check-btn:hover {
+            box-shadow: 0 10px 20px rgba(255, 152, 0, 0.4);
+        }
+
+        .page-info {
+            margin-top: 10px;
+            padding: 10px 15px;
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            border-radius: 4px;
+            color: #2e7d32;
+            font-weight: 600;
+            display: none;
+        }
+
+        .page-info.show {
+            display: block;
+        }
+
+        .page-info.error {
+            background: #ffebee;
+            border-left-color: #f44336;
+            color: #c62828;
+        }
+
+        .progress-box {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .progress-box.show {
+            display: block;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .progress-text {
+            color: #666;
+            text-align: center;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+
+        .current-company {
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-size: 13px;
+            color: #333;
+        }
+    </style>
 </head>
 <body>
-    <div class="app-container">
-        <!-- Header -->
-        <header class="header">
-            <div class="logo">
-                <i class="fas fa-spider"></i>
-                <span>Web Crawler Tool</span>
-            </div>
-            <div class="header-actions">
-                <button id="helpBtn" class="btn btn-icon" title="Hướng dẫn">
-                    <i class="fas fa-question-circle"></i>
-                </button>
-            </div>
-        </header>
+    <div class="container">
+        <h1>🕷️ Crawler Doanh Nghiệp</h1>
+        <p class="subtitle">Multi-Site Crawler - Tự động crawl và xuất Excel</p>
 
-        <!-- Main Content -->
-        <div class="main-content">
-            <!-- Sidebar - Controls -->
-            <aside class="sidebar">
-                <!-- URL Input -->
-                <div class="panel">
-                    <h3><i class="fas fa-link"></i> URL Trang Web</h3>
-                    <div class="url-input-group">
-                        <input type="text" id="urlInput" placeholder="Dán link trang web vào đây..." />
-                        <button id="loadBtn" class="btn btn-primary">
-                            <i class="fas fa-eye"></i> Preview
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Simple Selector -->
-                <div class="panel">
-                    <h3><i class="fas fa-crosshairs"></i> Chọn Vùng Dữ Liệu</h3>
-                    <div class="simple-controls">
-                        <button id="selectModeBtn" class="btn btn-secondary btn-lg">
-                            <i class="fas fa-mouse-pointer"></i> Chọn Vùng Chứa Dữ Liệu
-                        </button>
-                        <p class="hint">Click vào vùng chứa danh sách dữ liệu (như: danh sách sản phẩm, bài viết...)</p>
-                        
-                        <div id="selectedArea" class="hidden selected-area">
-                            <div class="selected-info">
-                                <i class="fas fa-check-circle"></i>
-                                <span>Đã chọn vùng dữ liệu</span>
-                            </div>
-                            <div id="detectedFields" class="detected-fields"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Actions -->
-                <div class="panel actions-panel">
-                    <button id="crawlBtn" class="btn btn-success btn-lg" disabled>
-                        <i class="fas fa-download"></i> Crawl Dữ Liệu
-                    </button>
-                    <button id="exportBtn" class="btn btn-excel btn-lg" disabled>
-                        <i class="fas fa-file-excel"></i> Xuất Excel
-                    </button>
-                    <button id="clearBtn" class="btn btn-secondary">
-                        <i class="fas fa-refresh"></i> Reset
-                    </button>
-                </div>
-            </aside>
-
-            <!-- Preview Area -->
-            <main class="preview-area">
-                <div class="preview-header">
-                    <span id="previewUrl">Chưa load trang nào</span>
-                    <div class="preview-actions">
-                        <button id="refreshBtn" class="btn btn-icon" title="Làm mới">
-                            <i class="fas fa-sync-alt"></i>
-                        </button>
-                        <button id="openNewTabBtn" class="btn btn-icon" title="Mở trong tab mới">
-                            <i class="fas fa-external-link-alt"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="preview-container">
-                    <div id="loadingOverlay" class="hidden loading-overlay">
-                        <div class="spinner"></div>
-                        <p>Đang tải trang...</p>
-                    </div>
-                    <iframe id="previewFrame" sandbox="allow-same-origin allow-scripts"></iframe>
-                </div>
-            </main>
-
-            <!-- Data Preview Panel -->
-            <aside class="hidden data-panel" id="dataPanel">
-                <div class="panel-header">
-                    <h3><i class="fa-table fas"></i> Dữ liệu đã crawl</h3>
-                    <button id="closeDataPanel" class="btn btn-icon">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                <div class="data-stats">
-                    <span id="dataCount">0 dòng dữ liệu</span>
-                </div>
-                <div class="data-table-container">
-                    <table id="dataTable">
-                        <thead></thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-            </aside>
+        <div class="info-box">
+            <p><strong>Hướng dẫn:</strong> Chọn trang web, nhập số trang bắt đầu và kết thúc để crawl dữ liệu doanh nghiệp. 
+            Hệ thống sẽ tự động click vào từng link để lấy thông tin chi tiết và xuất ra file Excel.</p>
         </div>
 
-        <!-- Element Selector Modal -->
-        <div id="selectorModal" class="hidden modal">
-            <div class="modal-content">
-                <h3><i class="fas fa-tag"></i> Cấu hình phần tử</h3>
-                <div class="form-group">
-                    <label>Tên trường (Column name):</label>
-                    <input type="text" id="fieldName" placeholder="Ví dụ: Tiêu đề, Giá, Link..." />
+        <form id="crawlForm">
+            <input type="hidden" id="detectedWebsite" name="website" value="">
+            
+            <div class="form-group">
+                <label>URL trang web:</label>
+                <div class="url-input-group">
+                    <div>
+                        <input type="url" id="websiteUrl" placeholder="Nhập link trang web cần crawl" required>
+                    </div>
+                    <button type="button" class="check-btn" id="checkPagesBtn">🔍 Kiểm tra</button>
                 </div>
-                <div class="form-group">
-                    <label>CSS Selector:</label>
-                    <input type="text" id="cssSelector" readonly />
-                </div>
-                <div class="form-group">
-                    <label>Lấy giá trị:</label>
-                    <select id="attributeSelect">
-                        <option value="text">Text (Nội dung văn bản)</option>
-                        <option value="href">href (Link URL)</option>
-                        <option value="src">src (Nguồn hình ảnh)</option>
-                        <option value="value">value (Giá trị input)</option>
-                        <option value="html">HTML (Mã HTML)</option>
-                        <option value="custom">Thuộc tính khác...</option>
-                    </select>
-                </div>
-                <div class="form-group hidden" id="customAttrGroup">
-                    <label>Tên thuộc tính:</label>
-                    <input type="text" id="customAttribute" placeholder="data-id, title, alt..." />
-                </div>
-                <div class="form-group">
-                    <label>Preview giá trị:</label>
-                    <div id="valuePreview" class="value-preview">-</div>
-                </div>
-                <div class="modal-actions">
-                    <button id="cancelSelector" class="btn btn-secondary">Hủy</button>
-                    <button id="confirmSelector" class="btn btn-primary">Thêm</button>
-                </div>
+                <div class="page-info" id="pageInfo"></div>
             </div>
-        </div>
 
-        <!-- Help Modal -->
-        <div id="helpModal" class="hidden modal">
-            <div class="modal-content modal-lg">
-                <h3><i class="fas fa-book"></i> Hướng dẫn sử dụng</h3>
-                <div class="help-content">
-                    <h4>🌐 1. Preview trang web</h4>
-                    <p>Dán URL của trang web bạn muốn crawl vào ô nhập và nhấn "Preview"</p>
-                    
-                    <h4>🎯 2. Chọn vùng dữ liệu</h4>
-                    <p>Nhấn "Chọn Vùng Chứa Dữ Liệu" rồi click vào vùng chứa danh sách trên trang (ví dụ: vùng chứa danh sách sản phẩm, bài viết...)</p>
-                    
-                    <h4>🤖 3. Tự động phát hiện</h4>
-                    <p>Hệ thống sẽ tự động phát hiện các trường dữ liệu có thể crawl được như:</p>
-                    <ul>
-                        <li><strong>Link:</strong> Đường dẫn URL</li>
-                        <li><strong>Hình ảnh:</strong> Nguồn ảnh</li>
-                        <li><strong>Tiêu đề:</strong> Văn bản tiêu đề</li>
-                        <li><strong>Giá:</strong> Thông tin giá (có ký tự đ, $)</li>
-                        <li><strong>Mô tả:</strong> Nội dung văn bản dài</li>
-                    </ul>
-                    
-                    <h4>⚡ 4. Crawl và xuất Excel</h4>
-                    <p>Nhấn "Crawl Dữ liệu" để lấy dữ liệu từ tất cả items, sau đó "Xuất Excel" để tải file</p>
-                    
-                    <h4>💡 Mẹo sử dụng</h4>
-                    <ul>
-                        <li>Chọn vùng chứa nhiều items giống nhau để crawl hàng loạt</li>
-                        <li>Hệ thống tự động phát hiện cấu trúc, không cần setup phức tạp</li>
-                        <li>Dữ liệu sẽ được xuất thành file Excel với đầy đủ các cột</li>
-                    </ul>
+            <div class="row">
+                <div class="form-group">
+                    <label>Trang bắt đầu:</label>
+                    <input type="number" id="startPage" value="1" min="1" required>
                 </div>
-                <div class="modal-actions">
-                    <button id="closeHelp" class="btn btn-primary">Đã hiểu</button>
+                <div class="form-group">
+                    <label>Trang kết thúc:</label>
+                    <input type="number" id="endPage" value="3" min="1" required>
                 </div>
             </div>
+            
+            <div style="text-align: center; margin: 10px 0; font-weight: bold; font-size: 14px;" id="usageInfo"></div>
+            <div style="text-align: center; margin: 5px 0; font-size: 12px; transition: all 0.3s;" id="pageRangeWarning">
+                <span style="color: #666;">⚠️ Giới hạn: Tối đa 3 trang mỗi lần cào</span>
+            </div>
+
+            <button type="submit" id="startBtn">Bắt đầu Cào</button>
+        </form>
+
+        <div class="status" id="status">
+            <h3>Trạng thái</h3>
+            <div class="status-message" id="statusMessage"></div>
+            
+            <div class="progress-box" id="progressBox">
+                <div class="progress-text" id="progressText">Đang khởi tạo...</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width: 0%">0%</div>
+                </div>
+                <div class="current-company" id="currentCompany"></div>
+            </div>
+            <button class="download-btn" id="downloadBtn" style="display: none;">
+                📥 Tải xuống Excel
+            </button>
+            
+            <div class="results" id="results"></div>
         </div>
     </div>
 
-    <script src="app.js"></script>
+    <script>
+        let crawledData = [];
+        
+        // Usage limit settings
+        const MAX_ATTEMPTS = 2;
+        const MAX_PAGE_RANGE = 3;
+        const STORAGE_KEY = 'crawler_usage';
+        
+        // Get usage count from localStorage
+        function getUsageCount() {
+            const data = localStorage.getItem(STORAGE_KEY);
+            if (!data) return 0;
+            try {
+                const parsed = JSON.parse(data);
+                return parsed.count || 0;
+            } catch {
+                return 0;
+            }
+        }
+        
+        // Increment usage count
+        function incrementUsage() {
+            const count = getUsageCount() + 1;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({ count, lastUsed: new Date().toISOString() }));
+            updateUsageDisplay();
+            return count;
+        }
+        
+        // Check if user has attempts left
+        function hasAttemptsLeft() {
+            return getUsageCount() < MAX_ATTEMPTS;
+        }
+        
+        // Get remaining attempts
+        function getRemainingAttempts() {
+            return Math.max(0, MAX_ATTEMPTS - getUsageCount());
+        }
+        
+        // Update usage display
+        function updateUsageDisplay() {
+            const remaining = getRemainingAttempts();
+            const usageInfo = document.getElementById('usageInfo');
+            if (usageInfo) {
+                if (remaining > 0) {
+                    usageInfo.textContent = `Còn lại: ${remaining}/${MAX_ATTEMPTS} lần lấy data`;
+                    usageInfo.style.color = remaining <= 3 ? '#ff6b6b' : '#4CAF50';
+                } else {
+                    usageInfo.textContent = `❌ Đã hết lượt sử dụng (${MAX_ATTEMPTS}/${MAX_ATTEMPTS})`;
+                    usageInfo.style.color = '#ff6b6b';
+                }
+            }
+        }
+        
+        // Initialize usage display on page load
+        window.addEventListener('DOMContentLoaded', updateUsageDisplay);
+        
+        // Validate page range realtime
+        function validatePageRange() {
+            const startPage = parseInt(document.getElementById('startPage').value) || 0;
+            const endPage = parseInt(document.getElementById('endPage').value) || 0;
+            const warningDiv = document.getElementById('pageRangeWarning');
+            
+            if (!warningDiv) return;
+            
+            const pageRange = endPage - startPage + 1;
+            
+            if (startPage > 0 && endPage > 0 && startPage <= endPage) {
+                if (pageRange <= MAX_PAGE_RANGE) {
+                    // Valid range - show success message
+                    warningDiv.innerHTML = `<span style="color: #4CAF50;">✅ Hợp lệ: ${pageRange} trang (từ ${startPage} đến ${endPage})</span>`;
+                } else {
+                    // Invalid range - show error
+                    warningDiv.innerHTML = `<span style="color: #ff6b6b;">❌ Vượt giới hạn: ${pageRange} trang (tối đa ${MAX_PAGE_RANGE} trang)</span>`;
+                }
+            } else {
+                // Default message
+                warningDiv.innerHTML = `<span style="color: #666;">⚠️ Giới hạn: Tối đa ${MAX_PAGE_RANGE} trang mỗi lần crawl</span>`;
+            }
+        }
+        
+        // Add event listeners for page inputs
+        window.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('startPage').addEventListener('input', validatePageRange);
+            document.getElementById('endPage').addEventListener('input', validatePageRange);
+            validatePageRange(); // Initial check
+        });
+
+        // Check pages button handler
+        document.getElementById('checkPagesBtn').addEventListener('click', async () => {
+            const url = document.getElementById('websiteUrl').value;
+            const pageInfo = document.getElementById('pageInfo');
+            const checkBtn = document.getElementById('checkPagesBtn');
+            
+            if (!url) {
+                pageInfo.textContent = '⚠️ Vui lòng nhập URL';
+                pageInfo.className = 'page-info error show';
+                return;
+            }
+
+            checkBtn.disabled = true;
+            checkBtn.textContent = '⏳ Đang kiểm tra...';
+            pageInfo.textContent = 'Đang phân tích trang web...';
+            pageInfo.className = 'page-info show';
+
+            try {
+                const response = await fetch('/api/check-pages', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    pageInfo.textContent = `✅ Tìm thấy ${result.totalPages} trang | Website: ${result.siteName}`;
+                    pageInfo.className = 'page-info show';
+                    
+                    // Auto-fill end page and store detected website
+                    document.getElementById('endPage').value = result.totalPages;
+                    document.getElementById('detectedWebsite').value = result.website;
+                } else {
+                    pageInfo.textContent = `❌ ${result.error || 'Không thể kiểm tra trang'}`;
+                    pageInfo.className = 'page-info error show';
+                }
+            } catch (error) {
+                pageInfo.textContent = '❌ Lỗi kết nối: ' + error.message;
+                pageInfo.className = 'page-info error show';
+            } finally {
+                checkBtn.disabled = false;
+                checkBtn.textContent = '🔍 Kiểm tra';
+            }
+        });
+
+        document.getElementById('crawlForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const startPage = parseInt(document.getElementById('startPage').value);
+            const endPage = parseInt(document.getElementById('endPage').value);
+            const website = document.getElementById('detectedWebsite').value;
+            
+            if (!website) {
+                alert('Vui lòng kiểm tra URL trước khi crawl!');
+                return;
+            }
+            
+            // Check usage limit
+            if (!hasAttemptsLeft()) {
+                alert(`❌ Bạn đã hết lượt sử dụng!\n\nĐã sử dụng: ${MAX_ATTEMPTS}/${MAX_ATTEMPTS} lần\n\nVui lòng xóa dữ liệu trình duyệt để reset (hoặc liên hệ admin).`);
+                return;
+            }
+            
+            // Validate page range
+            if (startPage > endPage) {
+                alert('Trang bắt đầu phải nhỏ hơn hoặc bằng trang kết thúc!');
+                return;
+            }
+            
+            // Check max page range (3 pages max)
+            const pageRange = endPage - startPage + 1;
+            if (pageRange > MAX_PAGE_RANGE) {
+                alert(`❌ Giới hạn crawl: Tối đa ${MAX_PAGE_RANGE} trang mỗi lần!\n\nBạn đang chọn: ${pageRange} trang (từ ${startPage} đến ${endPage})\n\nVui lòng giảm khoảng cách trang.`);
+                return;
+            }
+            
+            const startBtn = document.getElementById('startBtn');
+            const status = document.getElementById('status');
+            const statusMessage = document.getElementById('statusMessage');
+            const results = document.getElementById('results');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const progressBox = document.getElementById('progressBox');
+            const progressText = document.getElementById('progressText');
+            const progressFill = document.getElementById('progressFill');
+            const currentCompany = document.getElementById('currentCompany');
+
+            // Reset
+            crawledData = [];
+            status.classList.add('show');
+            progressBox.classList.add('show');
+            statusMessage.innerHTML = '<span class="loading"></span>Đang khởi động crawler...';
+            results.innerHTML = '';
+            downloadBtn.style.display = 'none';
+            startBtn.disabled = true;
+            progressFill.style.width = '0%';
+            progressFill.textContent = '0%';
+
+            try {
+                // Get checked URL for trangvang
+                const checkedUrl = document.getElementById('websiteUrl').value.trim();
+                
+                // Sử dụng EventSource để nhận real-time progress
+                let apiUrl = `/api/start-crawl?startPage=${startPage}&endPage=${endPage}&website=${website}`;
+                
+                // For trangvang, add the category URL
+                if (website === 'trangvang' && checkedUrl) {
+                    apiUrl += `&url=${encodeURIComponent(checkedUrl)}`;
+                }
+                
+                const eventSource = new EventSource(apiUrl);
+                
+                eventSource.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    
+                    if (data.type === 'page') {
+                        // Cập nhật progress cho page
+                        const progress = (data.currentPage / data.totalPages) * 100;
+                        progressFill.style.width = progress + '%';
+                        progressFill.textContent = Math.round(progress) + '%';
+                        progressText.textContent = `📄 ${data.message}`;
+                        currentCompany.textContent = '';
+                        
+                    } else if (data.type === 'company') {
+                        // Cập nhật progress cho company
+                        const pageProgress = ((data.currentPage - 1) / data.totalPages) * 100;
+                        const companyProgress = (data.currentCompany / data.totalCompanies) * (100 / data.totalPages);
+                        const totalProgress = pageProgress + companyProgress;
+                        
+                        progressFill.style.width = totalProgress + '%';
+                        progressFill.textContent = Math.round(totalProgress) + '%';
+                        progressText.textContent = `📄 Trang ${data.currentPage}/${data.totalPages}`;
+                        currentCompany.textContent = `🏢 [${data.currentCompany}/${data.totalCompanies}] ${data.companyName}`;
+                        
+                    } else if (data.type === 'complete') {
+                        // Hoàn thành
+                        eventSource.close();
+                        crawledData = data.data;
+                        
+                        // Increment usage count
+                        const newCount = incrementUsage();
+                        const remaining = getRemainingAttempts();
+                        
+                        progressFill.style.width = '100%';
+                        progressFill.textContent = '100%';
+                        progressText.textContent = `✅ Hoàn thành! (Còn ${remaining} lần)`;
+                        currentCompany.textContent = '';
+                        
+                        statusMessage.innerHTML = `<span class="success">✓ Crawl thành công!</span><br>
+                            Tổng số: <strong>${data.count}</strong> doanh nghiệp`;
+                        
+                        // Hiển thị preview
+                        results.innerHTML = '<h4>Kết quả:</h4>';
+                        data.data.slice(0, 5).forEach((company, index) => {
+                            results.innerHTML += `
+                                <div class="company-card">
+                                    <h4>${index + 1}. ${company.name}</h4>
+                                    <p><strong>Tên giao dịch:</strong> ${company.tradingName || 'N/A'}</p>
+                                    <p><strong>Mã số thuế:</strong> ${company.taxCode || 'N/A'}</p>
+                                    <p><strong>Đại diện:</strong> ${company.legalRep || 'N/A'}</p>
+                                    <p><strong>Địa chỉ:</strong> ${company.address || 'N/A'}</p>
+                                    <p><strong>Điện thoại:</strong> ${company.phone || 'N/A'}</p>
+                                    <p><strong>Email:</strong> ${company.email || 'N/A'}</p>
+                                    <p><strong>Trạng thái:</strong> ${company.status || 'N/A'}</p>
+                                </div>
+                            `;
+                        });
+
+                        if (data.count > 5) {
+                            results.innerHTML += `<p style="text-align: center; color: #666;">...và ${data.count - 5} công ty khác</p>`;
+                        }
+
+                        downloadBtn.style.display = 'block';
+                        startBtn.disabled = false;
+                        
+                    } else if (data.type === 'error') {
+                        // Lỗi
+                        eventSource.close();
+                        statusMessage.innerHTML = `<span class="error">✗ Lỗi:</span> ${data.error}`;
+                        progressBox.classList.remove('show');
+                        startBtn.disabled = false;
+                    }
+                };
+
+                eventSource.onerror = (error) => {
+                    console.error('EventSource error:', error);
+                    eventSource.close();
+                    statusMessage.innerHTML = '<span class="error">✗ Lỗi kết nối</span>';
+                    progressBox.classList.remove('show');
+                    startBtn.disabled = false;
+                };
+
+            } catch (error) {
+                statusMessage.innerHTML = `<span class="error">✗ Lỗi:</span> ${error.message}`;
+                progressBox.classList.remove('show');
+                startBtn.disabled = false;
+            }
+        });
+
+        document.getElementById('downloadBtn').addEventListener('click', async () => {
+            const downloadBtn = document.getElementById('downloadBtn');
+            const originalText = downloadBtn.textContent;
+
+            downloadBtn.disabled = true;
+            downloadBtn.textContent = '⏳ Đang tạo file...';
+
+            try {
+                const response = await fetch('/api/download-excel', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ data: crawledData })
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `doanh_nghiep_${Date.now()}.xlsx`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+
+                    downloadBtn.textContent = '✓ Đã tải xuống!';
+                    setTimeout(() => {
+                        downloadBtn.textContent = originalText;
+                        downloadBtn.disabled = false;
+                    }, 2000);
+                } else {
+                    throw new Error('Không thể tải file');
+                }
+            } catch (error) {
+                alert('Lỗi khi tải file: ' + error.message);
+                downloadBtn.textContent = originalText;
+                downloadBtn.disabled = false;
+            }
+        });
+    </script>
 </body>
 </html>
