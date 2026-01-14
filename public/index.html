@@ -385,7 +385,7 @@
         let crawledData = [];
         
         // Usage limit settings
-        const MAX_ATTEMPTS = 2;
+        const MAX_ATTEMPTS = 19;
         const MAX_PAGE_RANGE = 3;
         const STORAGE_KEY = 'crawler_usage';
         
@@ -567,14 +567,14 @@
             progressFill.textContent = '0%';
 
             try {
-                // Get checked URL for trangvang
+                // Get checked URL for trangvang and hsct
                 const checkedUrl = document.getElementById('websiteUrl').value.trim();
                 
                 // Sử dụng EventSource để nhận real-time progress
                 let apiUrl = `/api/start-crawl?startPage=${startPage}&endPage=${endPage}&website=${website}`;
                 
-                // For trangvang, add the category URL
-                if (website === 'trangvang' && checkedUrl) {
+                // For trangvang and hsct, add the category URL
+                if ((website === 'trangvang' || website === 'hsct') && checkedUrl) {
                     apiUrl += `&url=${encodeURIComponent(checkedUrl)}`;
                 }
                 

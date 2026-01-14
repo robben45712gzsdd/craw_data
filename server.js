@@ -45,7 +45,15 @@ const SITE_CONFIGS = {
     hsct: {
         name: 'HSCT',
         baseUrl: 'https://hsctvn.com',
-        listUrl: (page) => `https://hsctvn.com/?page=${page}`,
+        listUrl: (page, baseUrl) => {
+            if (page === 1) return baseUrl;
+            // Nếu có baseUrl với query, thêm &p= cho page
+            if (baseUrl && baseUrl.includes('?')) {
+                return `${baseUrl}&p=${page - 1}`;
+            }
+            // Default fallback
+            return `https://hsctvn.com/?page=${page}`;
+        },
         listSelector: 'li',
         detailSelector: '.box_content',
         selectors: {
@@ -646,8 +654,8 @@ async function crawlCompanyData(startPage = 1, endPage = 5, website = 'tratencon
                 });
             }
 
-            // For trangvang, pass the category URL
-            const url = (website === 'trangvang' && startUrl) 
+            // For trangvang and hsct, pass the category URL
+            const url = ((website === 'trangvang' || website === 'hsct') && startUrl) 
                 ? siteConfig.listUrl(pageNum, startUrl) 
                 : siteConfig.listUrl(pageNum);
             
@@ -975,7 +983,7 @@ app.post('/api/check-pages', async (req, res) => {
             
             totalPages = maxPage > 1 ? maxPage : 1;
         } else if (website === 'hsct') {
-            // HSCT pagination detection - structure: <div class="next-page"><a>1</a><a>2</a>...<a>300123</a></div>
+            // HSCT pagination detection for both homepage and search page
             const $nextPage = $('.next-page');
             let maxPage = 1;
             
@@ -988,11 +996,19 @@ app.post('/api/check-pages', async (req, res) => {
                     const href = $link.attr('href');
                     const text = $link.text().trim();
                     
-                    // Try to extract from href: /page-300123
-                    if (href) {
+                    // Try to extract from href for homepage: /page-300123
+                    if (href && href.includes('/page-')) {
                         const pageMatch = href.match(/\/page-(\d+)/);
                         if (pageMatch) {
                             const pageNum = parseInt(pageMatch[1]);
+                            if (pageNum > maxPage) maxPage = pageNum;
+                        }
+                    }
+                    // Try to extract from href for search page: ?key=...&p=123
+                    else if (href && href.includes('&p=')) {
+                        const pageMatch = href.match(/&p=(\d+)/);
+                        if (pageMatch) {
+                            const pageNum = parseInt(pageMatch[1]) + 1; // p starts from 0, so +1
                             if (pageNum > maxPage) maxPage = pageNum;
                         }
                     }
@@ -1001,6 +1017,20 @@ app.post('/api/check-pages', async (req, res) => {
                     const pageNum = parseInt(text);
                     if (!isNaN(pageNum) && pageNum > maxPage) {
                         maxPage = pageNum;
+                    }
+                });
+            }
+            
+            // Also check for other pagination patterns on search page
+            if (maxPage === 1) {
+                $('a[href*="&p="]').each((index, element) => {
+                    const href = $(element).attr('href');
+                    if (href) {
+                        const pageMatch = href.match(/&p=(\d+)/);
+                        if (pageMatch) {
+                            const pageNum = parseInt(pageMatch[1]) + 1; // p starts from 0
+                            if (pageNum > maxPage) maxPage = pageNum;
+                        }
                     }
                 });
             }
