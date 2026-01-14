@@ -5,10 +5,15 @@ const ExcelJS = require('exceljs');
 const path = require('path');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 app.use(express.json({ limit: '1000mb' }));
 app.use(express.static('public'));
+
+// Homepage route
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 // Site configurations
 const SITE_CONFIGS = {
@@ -1077,7 +1082,13 @@ app.post('/api/download-excel', async (req, res) => {
     }
 });
 
-app.listen(PORT, () => {
-    console.log(`Server đang chạy tại http://localhost:${PORT}`);
-    console.log('Mở trình duyệt và truy cập để bắt đầu crawl dữ liệu!');
-});
+// Export for Vercel
+module.exports = app;
+
+// Listen only if running locally (not on Vercel)
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, () => {
+        console.log(`Server đang chạy tại http://localhost:${PORT}`);
+        console.log('Mở trình duyệt và truy cập để bắt đầu crawl dữ liệu!');
+    });
+}
