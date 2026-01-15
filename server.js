@@ -5,6 +5,8 @@ const ExcelJS = require('exceljs');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const session = require('express-session');
+const https = require('https');
+const { HttpsProxyAgent } = require('https-proxy-agent');
 
 const app = express();
 const PORT = process.env.PORT || 10000;
@@ -169,7 +171,22 @@ const SITE_CONFIGS = {
     }
 };
 
-// Tạo axios instance với headers giả lập browser
+// Tạo proxy agent (nếu có cấu hình proxy)
+let httpsAgent = null;
+if (process.env.PROXY_HOST && process.env.PROXY_PORT) {
+    const proxyUrl = process.env.PROXY_USER && process.env.PROXY_PASS
+        ? `http://${process.env.PROXY_USER}:${process.env.PROXY_PASS}@${process.env.PROXY_HOST}:${process.env.PROXY_PORT}`
+        : `http://${process.env.PROXY_HOST}:${process.env.PROXY_PORT}`;
+    
+    httpsAgent = new HttpsProxyAgent(proxyUrl, {
+        rejectUnauthorized: false
+    });
+    console.log(`✓ Đã cấu hình proxy: ${process.env.PROXY_HOST}:${process.env.PROXY_PORT}`);
+} else {
+    console.log('ℹ Chạy không sử dụng proxy');
+}
+
+// Tạo axios instance với headers giả lập browser và proxy
 const client = axios.create({
     headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -179,7 +196,9 @@ const client = axios.create({
         'Connection': 'keep-alive',
         'Upgrade-Insecure-Requests': '1'
     },
-    timeout: 30000
+    timeout: 30000,
+    httpsAgent: httpsAgent,
+    proxy: false
 });
 
 // Delay helper
@@ -249,11 +268,29 @@ function parseTrangvangList($, siteConfig) {
         const detailUrl = $nameLink.attr('href');
         
         if (name && detailUrl) {
-            // Extract address from location-dot icon's parent small tag
+            // Extract address from listing_diachi_nologo or logo_lisitng_address
             let address = '';
-            $container.find('i.fa-location-dot').parent('small').each((i, el) => {
-                address = $(el).text().replace(/\s+/g, ' ').trim();
-            });
+            
+            // Try listing_diachi_nologo first (more common)
+            const $addressSmall = $container.find('.listing_diachi_nologo > div small').first();
+            if ($addressSmall.length > 0) {
+                address = $addressSmall.text().trim().replace(/\s+/g, ' ');
+            }
+            
+            // Fallback: try logo_lisitng_address
+            if (!address) {
+                const $logoAddress = $container.find('.logo_lisitng_address > div').first();
+                if ($logoAddress.length > 0 && $logoAddress.find('i').length === 0) {
+                    address = $logoAddress.text().trim().replace(/\s+/g, ' ');
+                }
+            }
+            
+            // Fallback: try location-dot icon
+            if (!address) {
+                $container.find('i.fa-location-dot').parent('small').each((i, el) => {
+                    address = $(el).text().replace(/\s+/g, ' ').trim();
+                });
+            }
             
             // Extract phone numbers from tel: links
             const phones = [];
@@ -461,10 +498,26 @@ async function parseTrangvangDetail($detail, company) {
         }
     }
     
-    // 3. Extract address (first occurrence in logo_lisitng_address)
-    const $addressDiv = $detail('.logo_lisitng_address > div').first();
-    if ($addressDiv.length > 0) {
-        const address = $addressDiv.text().trim();
+    // 3. Extract address from logo_lisitng_address - get first div without icon
+    let address = '';
+    $detail('.logo_lisitng_address > div').each((i, div) => {
+        const $div = $detail(div);
+        // Skip divs with icons (phone, email, website)
+        if ($div.find('i').length === 0 && $div.find('a').length === 0) {
+            address = $div.text().trim().replace(/\s+/g, ' ');
+            return false; // break
+        }
+    });
+    
+    // If not found, try to get first div
+    if (!address) {
+        const $firstDiv = $detail('.logo_lisitng_address > div').first();
+        if ($firstDiv.length > 0) {
+            address = $firstDiv.text().trim().replace(/\s+/g, ' ');
+        }
+    }
+    
+    if (address) {
         allData.push(address);
         company.address = address;
     }
