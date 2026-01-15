@@ -3,16 +3,120 @@ const axios = require('axios');
 const cheerio = require('cheerio');
 const ExcelJS = require('exceljs');
 const path = require('path');
+const bcrypt = require('bcryptjs');
+const session = require('express-session');
 
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-app.use(express.json({ limit: '1000mb' }));
-app.use(express.static('public'));
+// Session configuration
+app.use(session({
+    secret: 'crawler-secret-key-2026',
+    resave: false,
+    saveUninitialized: false,
+    cookie: { 
+        maxAge: 24 * 60 * 60 * 1000, // 24 hours
+        httpOnly: true
+    }
+}));
 
-// Homepage route
+app.use(express.json({ limit: '1000mb' }));
+
+// Serve static files but disable index serving
+app.use(express.static('public', { index: false }));
+
+// Database user (password hashed with bcrypt)
+const users = {
+    'admin': '$2b$10$Xk6AiwL5mGFQngrapQ5FvOO.WaJKIi.NH6QowlPGcbFZZ6NBX8OV2', 
+    'user': '$2b$10$DPVtrQ5fshS2RDrUtt5lHeIRY4AurvgnIdp3B79/DntFhtvNYWfG2'   
+};
+
+// Middleware to check authentication
+function requireAuth(req, res, next) {
+    if (req.session && req.session.userId) {
+        return next();
+    }
+    res.status(401).json({ success: false, message: 'Vui lòng đăng nhập!' });
+}
+
+// Generate proper password hash (for reference)
+async function generateHash(password) {
+    return await bcrypt.hash(password, 10);
+}
+
+// Login endpoint
+app.post('/api/login', async (req, res) => {
+    try {
+        const { username, password } = req.body;
+
+        if (!username || !password) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Vui lòng nhập tài khoản và mật khẩu!' 
+            });
+        }
+
+        // Check if user exists
+        const hashedPassword = users[username];
+        if (!hashedPassword) {
+            return res.status(401).json({ 
+                success: false, 
+                message: 'Tài khoản hoặc mật khẩu không đúng!' 
+            });
+        }
+
+        // Verify password
+        const isValid = await bcrypt.compare(password, hashedPassword);
+        if (!isValid) {
+            return res.status(401).json({ 
+                success: false, 
+                message: 'Tài khoản hoặc mật khẩu không đúng!' 
+            });
+        }
+
+        // Set session
+        req.session.userId = username;
+        req.session.loginTime = new Date().toISOString();
+
+        res.json({ 
+            success: true, 
+            message: 'Đăng nhập thành công!',
+            user: username
+        });
+    } catch (error) {
+        console.error('Login error:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Lỗi server!' 
+        });
+    }
+});
+
+// Logout endpoint
+app.post('/api/logout', (req, res) => {
+    req.session.destroy();
+    res.json({ success: true, message: 'Đăng xuất thành công!' });
+});
+
+// Check authentication endpoint
+app.get('/api/check-auth', (req, res) => {
+    if (req.session && req.session.userId) {
+        res.json({ 
+            authenticated: true, 
+            user: req.session.userId 
+        });
+    } else {
+        res.json({ authenticated: false });
+    }
+});
+
+// Homepage route - require authentication (MUST BE BEFORE static middleware)
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    if (req.session && req.session.userId) {
+        res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    } else {
+        res.sendFile(path.join(__dirname, 'public', 'login.html'));
+    }
 });
 
 // Site configurations
@@ -365,25 +469,42 @@ async function parseTrangvangDetail($detail, company) {
         company.address = address;
     }
     
-    // 4. Extract ALL phone numbers from tel: links
-    const phones = [];
-    $detail('a[href^="tel:"]').each((i, phoneLink) => {
-        const phoneText = $detail(phoneLink).text().trim();
-        if (phoneText) phones.push(phoneText);
-    });
-    if (phones.length > 0) {
-        const phoneStr = phones.join(', ');
-        allData.push('Điện thoại: ' + phoneStr);
-        company.phone = phoneStr;
-    }
+    // 4. Extract phone number - prioritize hotline, then regular phone (not Zalo), take only one
+    let finalPhone = '';
     
-    // 5. Extract hotline separately if exists
+    // First, try to find hotline
     $detail('.logo_lisitng_address div').each((i, div) => {
         const text = $detail(div).text();
         if (text.includes('Hotline:')) {
-            allData.push(text.trim());
+            // Extract hotline number
+            const hotlineMatch = text.match(/Hotline[:\s]*([0-9\s\-\.]+)/i);
+            if (hotlineMatch) {
+                finalPhone = hotlineMatch[1].trim();
+                allData.push('Hotline: ' + finalPhone);
+                return false; // break - found hotline
+            }
         }
     });
+    
+    // If no hotline found, get first regular phone number (not Zalo)
+    if (!finalPhone) {
+        $detail('a[href^="tel:"]').each((i, phoneLink) => {
+            const phoneText = $detail(phoneLink).text().trim();
+            const phoneHref = $detail(phoneLink).attr('href');
+            
+            // Skip if this is a Zalo link (check both text and nearby elements)
+            const parentText = $detail(phoneLink).parent().text().toLowerCase();
+            if (phoneText && !parentText.includes('zalo') && phoneHref && !phoneHref.includes('zalo')) {
+                finalPhone = phoneText;
+                allData.push('Điện thoại: ' + finalPhone);
+                return false; // break - take only first one
+            }
+        });
+    }
+    
+    if (finalPhone) {
+        company.phone = finalPhone;
+    }
     
     // 6. Extract email from mailto: link
     const $emailLink = $detail('a[href^="mailto:"]').first();
@@ -876,7 +997,7 @@ async function exportToExcel(data, filename) {
 }
 
 // API endpoint để bắt đầu crawl với Server-Sent Events
-app.get('/api/start-crawl', async (req, res) => {
+app.get('/api/start-crawl', requireAuth, async (req, res) => {
     const startPage = parseInt(req.query.startPage) || 1;
     const endPage = parseInt(req.query.endPage) || 5;
     const website = req.query.website || 'tratencongty';
@@ -921,7 +1042,7 @@ app.get('/api/start-crawl', async (req, res) => {
 });
 
 // API endpoint to check total pages
-app.post('/api/check-pages', async (req, res) => {
+app.post('/api/check-pages', requireAuth, async (req, res) => {
     try {
         const { url } = req.body;
         
@@ -1082,7 +1203,7 @@ app.post('/api/check-pages', async (req, res) => {
 });
 
 // API endpoint để tải Excel
-app.post('/api/download-excel', async (req, res) => {
+app.post('/api/download-excel', requireAuth, async (req, res) => {
     try {
         const { data } = req.body;
         

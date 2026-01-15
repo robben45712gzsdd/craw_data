@@ -354,9 +354,8 @@
                 </div>
             </div>
             
-            <div style="text-align: center; margin: 10px 0; font-weight: bold; font-size: 14px;" id="usageInfo"></div>
             <div style="text-align: center; margin: 5px 0; font-size: 12px; transition: all 0.3s;" id="pageRangeWarning">
-                <span style="color: #666;">⚠️ Giới hạn: Tối đa 3 trang mỗi lần cào</span>
+                <span style="color: #666;">⚠️ Nhập số trang cần crawl</span>
             </div>
 
             <button type="submit" id="startBtn">Bắt đầu Cào</button>
@@ -384,59 +383,6 @@
     <script>
         let crawledData = [];
         
-        // Usage limit settings
-        const MAX_ATTEMPTS = 2;
-        const MAX_PAGE_RANGE = 3;
-        const STORAGE_KEY = 'crawler_usage';
-        
-        // Get usage count from localStorage
-        function getUsageCount() {
-            const data = localStorage.getItem(STORAGE_KEY);
-            if (!data) return 0;
-            try {
-                const parsed = JSON.parse(data);
-                return parsed.count || 0;
-            } catch {
-                return 0;
-            }
-        }
-        
-        // Increment usage count
-        function incrementUsage() {
-            const count = getUsageCount() + 1;
-            localStorage.setItem(STORAGE_KEY, JSON.stringify({ count, lastUsed: new Date().toISOString() }));
-            updateUsageDisplay();
-            return count;
-        }
-        
-        // Check if user has attempts left
-        function hasAttemptsLeft() {
-            return getUsageCount() < MAX_ATTEMPTS;
-        }
-        
-        // Get remaining attempts
-        function getRemainingAttempts() {
-            return Math.max(0, MAX_ATTEMPTS - getUsageCount());
-        }
-        
-        // Update usage display
-        function updateUsageDisplay() {
-            const remaining = getRemainingAttempts();
-            const usageInfo = document.getElementById('usageInfo');
-            if (usageInfo) {
-                if (remaining > 0) {
-                    usageInfo.textContent = `Còn lại: ${remaining}/${MAX_ATTEMPTS} lần lấy data`;
-                    usageInfo.style.color = remaining <= 3 ? '#ff6b6b' : '#4CAF50';
-                } else {
-                    usageInfo.textContent = `❌ Đã hết lượt sử dụng (${MAX_ATTEMPTS}/${MAX_ATTEMPTS})`;
-                    usageInfo.style.color = '#ff6b6b';
-                }
-            }
-        }
-        
-        // Initialize usage display on page load
-        window.addEventListener('DOMContentLoaded', updateUsageDisplay);
-        
         // Validate page range realtime
         function validatePageRange() {
             const startPage = parseInt(document.getElementById('startPage').value) || 0;
@@ -448,16 +394,9 @@
             const pageRange = endPage - startPage + 1;
             
             if (startPage > 0 && endPage > 0 && startPage <= endPage) {
-                if (pageRange <= MAX_PAGE_RANGE) {
-                    // Valid range - show success message
-                    warningDiv.innerHTML = `<span style="color: #4CAF50;">✅ Hợp lệ: ${pageRange} trang (từ ${startPage} đến ${endPage})</span>`;
-                } else {
-                    // Invalid range - show error
-                    warningDiv.innerHTML = `<span style="color: #ff6b6b;">❌ Vượt giới hạn: ${pageRange} trang (tối đa ${MAX_PAGE_RANGE} trang)</span>`;
-                }
+                warningDiv.innerHTML = `<span style="color: #4CAF50;">✅ Hợp lệ: ${pageRange} trang (từ ${startPage} đến ${endPage})</span>`;
             } else {
-                // Default message
-                warningDiv.innerHTML = `<span style="color: #666;">⚠️ Giới hạn: Tối đa ${MAX_PAGE_RANGE} trang mỗi lần crawl</span>`;
+                warningDiv.innerHTML = `<span style="color: #666;">⚠️ Nhập số trang cần crawl</span>`;
             }
         }
         
@@ -526,22 +465,9 @@
                 return;
             }
             
-            // Check usage limit
-            if (!hasAttemptsLeft()) {
-                alert(`❌ Bạn đã hết lượt sử dụng!\n\nĐã sử dụng: ${MAX_ATTEMPTS}/${MAX_ATTEMPTS} lần\n\nVui lòng xóa dữ liệu trình duyệt để reset (hoặc liên hệ admin).`);
-                return;
-            }
-            
             // Validate page range
             if (startPage > endPage) {
                 alert('Trang bắt đầu phải nhỏ hơn hoặc bằng trang kết thúc!');
-                return;
-            }
-            
-            // Check max page range (3 pages max)
-            const pageRange = endPage - startPage + 1;
-            if (pageRange > MAX_PAGE_RANGE) {
-                alert(`❌ Giới hạn crawl: Tối đa ${MAX_PAGE_RANGE} trang mỗi lần!\n\nBạn đang chọn: ${pageRange} trang (từ ${startPage} đến ${endPage})\n\nVui lòng giảm khoảng cách trang.`);
                 return;
             }
             
@@ -607,13 +533,9 @@
                         eventSource.close();
                         crawledData = data.data;
                         
-                        // Increment usage count
-                        const newCount = incrementUsage();
-                        const remaining = getRemainingAttempts();
-                        
                         progressFill.style.width = '100%';
                         progressFill.textContent = '100%';
-                        progressText.textContent = `✅ Hoàn thành! (Còn ${remaining} lần)`;
+                        progressText.textContent = `✅ Hoàn thành!`;
                         currentCompany.textContent = '';
                         
                         statusMessage.innerHTML = `<span class="success">✓ Crawl thành công!</span><br>
