@@ -391,7 +391,8 @@
             
             if (!warningDiv) return;
             
-            const pageRange = endPage - startPage + 1;
+            // const pageRange = endPage - startPage + 1;
+            const pageRange = 15;
             
             if (startPage > 0 && endPage > 0 && startPage <= endPage) {
                 warningDiv.innerHTML = `<span style="color: #4CAF50;">✅ Hợp lệ: ${pageRange} trang (từ ${startPage} đến ${endPage})</span>`;
