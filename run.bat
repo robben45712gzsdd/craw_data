@@ -32,11 +32,20 @@ echo Ví dụ: IP: 171.236.178.110, Port: 18809
 echo        Username: muaproxy6968bf29eb718
 echo        Password: onnpiatgbtj3thst
 echo.
+echo Nhập "q" để quay lại menu chính
+echo.
 
 set /p PROXY_HOST="Nhập IP proxy: "
+if /i "%PROXY_HOST%"=="q" goto MENU
+
 set /p PROXY_PORT="Nhập Port: "
+if /i "%PROXY_PORT%"=="q" goto MENU
+
 set /p PROXY_USER="Nhập Username: "
+if /i "%PROXY_USER%"=="q" goto MENU
+
 set /p PROXY_PASS="Nhập Password: "
+if /i "%PROXY_PASS%"=="q" goto MENU
 
 if "%PROXY_HOST%"=="" (
     echo.
@@ -55,6 +64,14 @@ if "%PROXY_PORT%"=="" (
 echo.
 echo ✓ Đã cấu hình proxy: %PROXY_HOST%:%PROXY_PORT%
 echo.
+echo [1] Xác nhận và chạy
+echo [2] Nhập lại
+echo.
+set /p confirm="Lựa chọn (1-2): "
+
+if "%confirm%"=="2" goto PROXY_CONFIG
+if "%confirm%"=="1" goto START_SERVER
+
 goto START_SERVER
 
 :NO_PROXY
