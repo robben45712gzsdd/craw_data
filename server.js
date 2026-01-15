@@ -469,41 +469,55 @@ async function parseTrangvangDetail($detail, company) {
         company.address = address;
     }
     
-    // 4. Extract phone number - prioritize hotline, then regular phone (not Zalo), take only one
+    // 4. Extract phone number - prioritize hotline (mobile-screen-button icon), then regular phone (phone-volume icon)
     let finalPhone = '';
+    let hasZalo = false;
     
-    // First, try to find hotline
-    $detail('.logo_lisitng_address div').each((i, div) => {
-        const text = $detail(div).text();
-        if (text.includes('Hotline:')) {
-            // Extract hotline number
-            const hotlineMatch = text.match(/Hotline[:\s]*([0-9\s\-\.]+)/i);
-            if (hotlineMatch) {
-                finalPhone = hotlineMatch[1].trim();
-                allData.push('Hotline: ' + finalPhone);
-                return false; // break - found hotline
+    // First, try to find hotline with mobile-screen-button icon
+    $detail('i.fa-mobile-screen-button').each((i, icon) => {
+        const $parent = $detail(icon).parent();
+        const $phoneLink = $parent.find('a[href^="tel:"]').first();
+        
+        if ($phoneLink.length > 0) {
+            finalPhone = $phoneLink.text().trim();
+            
+            // Check if this div has Zalo (check for zalo.me link or zalo image)
+            const parentHtml = $parent.html();
+            if (parentHtml && (parentHtml.includes('zalo.me') || parentHtml.includes('zalo_txt.png'))) {
+                hasZalo = true;
             }
+            
+            return false; // break - found hotline
         }
     });
     
-    // If no hotline found, get first regular phone number (not Zalo)
+    // If no hotline found, get regular phone with phone-volume icon
     if (!finalPhone) {
-        $detail('a[href^="tel:"]').each((i, phoneLink) => {
-            const phoneText = $detail(phoneLink).text().trim();
-            const phoneHref = $detail(phoneLink).attr('href');
+        $detail('i.fa-phone-volume').each((i, icon) => {
+            const $parent = $detail(icon).parent();
+            const $phoneLink = $parent.find('a[href^="tel:"]').first();
             
-            // Skip if this is a Zalo link (check both text and nearby elements)
-            const parentText = $detail(phoneLink).parent().text().toLowerCase();
-            if (phoneText && !parentText.includes('zalo') && phoneHref && !phoneHref.includes('zalo')) {
-                finalPhone = phoneText;
-                allData.push('Điện thoại: ' + finalPhone);
-                return false; // break - take only first one
+            if ($phoneLink.length > 0) {
+                finalPhone = $phoneLink.text().trim();
+                
+                // Check if this div has Zalo
+                const parentHtml = $parent.html();
+                if (parentHtml && (parentHtml.includes('zalo.me') || parentHtml.includes('zalo_txt.png'))) {
+                    hasZalo = true;
+                }
+                
+                return false; // break - found phone
             }
         });
     }
     
+    // Format phone with Zalo status
     if (finalPhone) {
+        if (!hasZalo) {
+            finalPhone += ' (không có Zalo)';
+        }
         company.phone = finalPhone;
+        allData.push('Điện thoại: ' + finalPhone);
     }
     
     // 6. Extract email from mailto: link
