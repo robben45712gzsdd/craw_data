@@ -95,7 +95,7 @@ echo.
 REM Kiểm tra node_modules
 if not exist "node_modules\" (
     echo ⏳ Đang cài đặt dependencies...
-    call npm install
+    call yarn install
     echo.
 )
 
