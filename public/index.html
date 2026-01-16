@@ -500,8 +500,8 @@
                 // Sử dụng EventSource để nhận real-time progress
                 let apiUrl = `/api/start-crawl?startPage=${startPage}&endPage=${endPage}&website=${website}`;
                 
-                // For trangvang and hsct, add the category URL
-                if ((website === 'trangvang' || website === 'hsct') && checkedUrl) {
+                // For tratencongty, trangvang and hsct, add the URL (search/category URL)
+                if ((website === 'tratencongty' || website === 'trangvang' || website === 'hsct') && checkedUrl) {
                     apiUrl += `&url=${encodeURIComponent(checkedUrl)}`;
                 }
                 

@@ -126,7 +126,23 @@ const SITE_CONFIGS = {
     tratencongty: {
         name: 'Tra Tên Công Ty',
         baseUrl: 'https://www.tratencongty.com',
-        listUrl: (page) => `https://www.tratencongty.com/?page=${page}`,
+        listUrl: (page, baseUrl) => {
+            // Nếu có baseUrl (search URL) thì sử dụng nó
+            if (baseUrl) {
+                // Nếu URL đã có page= thì thay thế, nếu không thì thêm
+                if (baseUrl.includes('?page=') || baseUrl.includes('&page=')) {
+                    return baseUrl.replace(/[?&]page=\d+/, `?page=${page}`);
+                }
+                // Nếu URL có query params khác
+                if (baseUrl.includes('?')) {
+                    return `${baseUrl}&page=${page}`;
+                }
+                // Nếu không có query params
+                return `${baseUrl}?page=${page}`;
+            }
+            // Default: trang chủ
+            return `https://www.tratencongty.com/?page=${page}`;
+        },
         listSelector: '.search-results',
         detailSelector: '.jumbotron',
         selectors: {
@@ -842,10 +858,12 @@ async function crawlCompanyData(startPage = 1, endPage = 5, website = 'tratencon
                 });
             }
 
-            // For trangvang and hsct, pass the category URL
+            // For trangvang, hsct and tratencongty search - pass the category/search URL
             const url = ((website === 'trangvang' || website === 'hsct') && startUrl) 
                 ? siteConfig.listUrl(pageNum, startUrl) 
-                : siteConfig.listUrl(pageNum);
+                : (website === 'tratencongty' && startUrl)
+                    ? siteConfig.listUrl(pageNum, startUrl)
+                    : siteConfig.listUrl(pageNum);
             
             try {
                 const response = await client.get(url);
