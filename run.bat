@@ -4,9 +4,7 @@ color 0A
 title Web Crawler - Proxy Configuration
 
 echo.
-echo ===============================================================
 echo           WEB CRAWLER - CAU HINH PROXY
-echo ===============================================================
 echo.
 
 :MENU
@@ -24,9 +22,7 @@ goto MENU
 :PROXY_CONFIG
 cls
 echo.
-echo ===============================================================
 echo                    NHAP THONG TIN PROXY
-echo ===============================================================
 echo.
 echo Vi du: IP: 171.236.178.110, Port: 18809
 echo        Username: muaproxy6968bf29eb718
@@ -87,9 +83,7 @@ goto START_SERVER
 
 :START_SERVER
 echo.
-echo ===============================================================
-echo                    DANG KHOI DONG SERVER...
-echo ===============================================================
+echo DANG KHOI DONG SERVER...
 echo.
 
 REM Kiem tra node_modules
